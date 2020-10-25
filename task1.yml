@@ -1,0 +1,76 @@
+- hosts: all
+  tasks:
+   - name: Add docker repo
+     yum_repository:
+       name: docker
+       description: docker repo
+       baseurl: https://download.docker.com/linux/centos/7/x86_64/stable/
+       gpgcheck: no
+  
+  - name: Installing Docker packages
+     package:
+        name: "docker-ce-18.09.1*"
+        state: present
+     register: a
+
+   - name: Docker installation status
+     debug:
+        var: a
+
+   - name: Installing Docker SDK
+     pip:
+        name: "docker"
+     register: b
+
+   - name: Checking SDK install status
+     debug:
+        var: b
+
+- name: Starting Docker services
+     service:
+        name: "docker"
+        state: started
+        enabled: yes
+
+   - command: "systemctl status docker"
+     register: c
+
+   - name: Checking the status of Docker service
+     debug:
+        var: c
+
+   - name: Creating directory for copying HTML file
+     file:
+        path: "/ansible_task1"
+        state: directory
+
+   - name: Copying our html file into the directory
+     copy:
+        src: "home.html"
+        dest: "/ansible_task1/"
+     register: d
+   
+   - name: Status of the copied file
+     debug:
+        var: d
+
+   - name: Creating a container using HTTPD(Webserver) Image
+     docker_container:
+        name: myweb
+        image: httpd
+        state: started
+        exposed_ports:
+        - "80"
+        ports:
+        - "8081:80"
+        volumes:
+        - /ansible_task1:/usr/local/apache2/htdocs/
+        tty: true
+        detach: true
+
+   - command: "docker ps"
+     register: e
+
+   - name: Status of the Container
+     debug:
+        var: e
